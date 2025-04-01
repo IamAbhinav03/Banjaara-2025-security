@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { uploadCSVData } from "@/services/firebase";
@@ -74,16 +74,33 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ user }) => {
       <Card className="mb-4 shadow-lg">
         <CardContent>
           <h1 className="text-2xl font-bold mb-2">Upload CSV/Excel</h1>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="mb-2"
-          />
-          <Button onClick={handleUpload} className="mb-2">
-            Upload
-          </Button>
-          {status && <p className="text-green-500">{status}</p>}
+          <div className="flex flex-col gap-4">
+            <div>
+              <input
+                type="file"
+                accept=".csv"
+                id="csv-upload"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-slate-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-violet-50 file:text-violet-700
+                  hover:file:bg-violet-100"
+              />
+              {file && (
+                <p className="mt-2 text-sm text-blue-600">Selected: {file.name}</p>
+              )}
+            </div>
+            <Button 
+              onClick={handleUpload} 
+              disabled={!file}
+              className="w-full"
+            >
+              Upload
+            </Button>
+            {status && <p className={status.includes("failed") ? "text-red-500" : "text-green-500"}>{status}</p>}
+          </div>
         </CardContent>
       </Card>
     </div>
