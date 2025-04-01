@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User profiles
+    match /users/{userId} {
+      // Allow reading user profiles during login
+      allow read: if true;
+      // Only allow users to write their own profile
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // External participants
+    match /externals/{externalId} {
+      // Allow public read access to check UID validity
+      allow read: if true;
+      // Allow public write access only for on-the-spot registrations
+      allow create: if 
+        request.resource.data.type == 'on-the-spot' &&
+        request.resource.data.feePaid == false &&
+        request.resource.data.registrationDate is timestamp;
+      // Allow admin write access for all other operations
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Action logs
+    match /actionLogs/{logId} {
+      allow read: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow create: if request.auth != null;
+    }
+  }
+} 
