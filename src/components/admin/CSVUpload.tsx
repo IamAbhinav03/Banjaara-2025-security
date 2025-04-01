@@ -39,19 +39,21 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ user }) => {
     try {
       const text = await file.text();
       const results = Papa.parse(text, { header: true });
-      const rows = results.data.map((row: any) => ({
-        ID: row.ID,
-        Name: row.Name,
-        Email: row.Email,
-        Mobile: row.Mobile,
-        Gender: row.Gender,
-        College: row.College,
-        PaymentStatus: row["Payment Status"],
-        Events: row["Events"]
-          ? row["Events"].split(",").map((event: string) => event.trim())
-          : [],
-        Type: selectedType,
-      }));
+      const rows = results.data
+        .filter((row: any) => Object.values(row).some((value) => value !== ""))
+        .map((row: any) => ({
+          ID: row.ID || "",
+          Name: row.Name || "",
+          Email: row.Email || "",
+          Mobile: row.Mobile || "",
+          Gender: row.Gender || "",
+          College: row.College || "",
+          PaymentStatus: row["Payment Status"] || "not paid",
+          Events:
+            row.Events?.split(",").map((event: string) => event.trim()) || [],
+          Type: selectedType,
+        }));
+
       console.log(rows);
       const uids = await uploadCSVData(rows);
       setStatus(`Successfully uploaded ${uids.length} records`);
