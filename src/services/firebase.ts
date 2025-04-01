@@ -25,6 +25,8 @@ import {
   where,
   Timestamp,
   addDoc,
+  arrayUnion,
+  updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { User, External, ActionLog, CSVRow } from "../types";
@@ -179,6 +181,9 @@ export const createExternal = async (data: CSVRow): Promise<void> => {
       registrationDate: new Date(),
     };
     await setDoc(doc(db, "externals", bid), external);
+    await updateDoc(doc(db, "userBids", "bids"), {
+      usedBids: arrayUnion(bid),
+    });
   } catch (error) {
     console.error(
       `Failed to create external user with bid ${data.bid}:`,
