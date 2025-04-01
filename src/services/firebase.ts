@@ -152,60 +152,69 @@ export const getExternalByUid = async (
 /**
  * Creates a new external user
  *
- * Generates a random 6-digit UID and stores the user data in Firestore
+ * Uses the CSV ID as the bid and stores the user data in Firestore
  *
  * @param data - The external user's data (name, email, phone, type, feePaid)
- * @returns Promise<string> - The generated UID
+ * @returns Promise<void>
  *
  * @example
  * const userData = {
- *   name: "John Doe",
- *   email: "john@example.com",
- *   phone: "1234567890",
- *   type: "student",
- *   feePaid: true
+ *   ID: "1234",
+ *   Name: "John Doe",
+ *   Email: "john@example.com",
+ *   Mobile: "1234567890",
+ *   Gender: "Male",
+ *   College: "Ashoka University",
+ *   PaymentStatus: "paid",
+ *   Events: ["Event1", "Event2"],
+ *   Type: "participant"
  * };
- * const uid = await createExternal(userData);
- * console.log("Created user with UID:", uid);
+ * await createExternal(userData);
  */
-export const createExternal = async (data: CSVRow): Promise<string> => {
-  const bid = Math.floor(100000 + Math.random() * 900000).toString();
+export const createExternal = async (data: CSVRow): Promise<void> => {
+  const bid = data.bid;
   const external: External = {
-    bid,
     ...data,
     registrationDate: new Date(),
   };
   await setDoc(doc(db, "externals", bid), external);
-  return bid;
 };
 
 /**
  * Uploads multiple external users from CSV data
  *
  * @param rows - Array of CSV row data to create external users
- * @returns Promise<string[]> - Array of generated UIDs
+ * @returns Promise<number> - Number of successfully uploaded users
  *
  * @example
  * const csvData = [
  *   {
- *     name: "John Doe",
- *     email: "john@example.com",
- *     phone: "1234567890",
- *     type: "student",
- *     feePaid: true
+ *     ID: "1234",
+ *     Name: "John Doe",
+ *     Email: "john@example.com",
+ *     Mobile: "1234567890",
+ *     Gender: "Male",
+ *     College: "Ashoka University",
+ *     PaymentStatus: "paid",
+ *     Events: ["Event1", "Event2"],
+ *     Type: "participant"
  *   },
  *   // ... more rows
  * ];
- * const uids = await uploadCSVData(csvData);
- * console.log(`Created ${uids.length} users`);
+ * const count = await uploadCSVData(csvData);
+ * console.log(`Uploaded ${count} users`);
  */
-export const uploadCSVData = async (rows: CSVRow[]): Promise<string[]> => {
-  const uids: string[] = [];
+export const uploadCSVData = async (rows: CSVRow[]): Promise<number> => {
+  let successCount = 0;
   for (const row of rows) {
-    const uid = await createExternal(row);
-    uids.push(uid);
+    try {
+      await createExternal(row);
+      successCount++;
+    } catch (error) {
+      console.error(`Failed to upload user with ID ${row.bid}:`, error);
+    }
   }
-  return uids;
+  return successCount;
 };
 
 /**

@@ -33,6 +33,7 @@ export interface ActionLog {
 }
 
 export interface CSVRow {
+  bid: string;
   name: string;
   email: string;
   phone: string;
