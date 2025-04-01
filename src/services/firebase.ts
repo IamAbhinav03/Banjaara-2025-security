@@ -1,3 +1,15 @@
+/**
+ * Firebase Service Layer
+ *
+ * This module provides a high-level service layer for Firebase operations.
+ * It abstracts Firebase-specific implementation details and provides type-safe
+ * functions for common operations.
+ *
+ * @module services/firebase
+ * @requires firebase/auth
+ * @requires firebase/firestore
+ */
+
 import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -17,7 +29,36 @@ import {
 import { auth, db } from "../firebase";
 import { User, External, ActionLog, CSVRow } from "../types";
 
-// Authentication
+/**
+ * Authentication Service
+ */
+
+/**
+ * Signs in a user with email and password
+ *
+ * This function performs a two-step authentication process:
+ * 1. Authenticates with Firebase Auth
+ * 2. Fetches the user's profile from Firestore
+ *
+ * @param email - User's email address
+ * @param password - User's password
+ * @returns Promise<User> - The authenticated user's profile data
+ *
+ * @throws {Error} With specific error messages for different failure cases:
+ * - "No user found with this email" - When email doesn't exist
+ * - "Incorrect password" - When password is wrong
+ * - "Invalid email address" - When email format is invalid
+ * - "Access denied" - When user exists but has no profile
+ * - "Login failed" - For other authentication errors
+ *
+ * @example
+ * try {
+ *   const user = await signIn("user@example.com", "password123");
+ *   console.log("Logged in as:", user.name);
+ * } catch (error) {
+ *   console.error("Login failed:", error.message);
+ * }
+ */
 export const signIn = async (
   email: string,
   password: string
@@ -41,27 +82,62 @@ export const signIn = async (
 
     const userData = userDoc.data() as User;
     return userData;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Login error:", error);
-    if (error.code === "auth/user-not-found") {
-      throw new Error("No user found with this email.");
-    } else if (error.code === "auth/wrong-password") {
-      throw new Error("Incorrect password.");
-    } else if (error.code === "auth/invalid-email") {
-      throw new Error("Invalid email address.");
-    } else if (error.code === "permission-denied") {
-      throw new Error("Access denied. Please contact an administrator.");
-    } else {
-      throw new Error("Login failed. Please try again.");
+    if (error instanceof Error && "code" in error) {
+      const firebaseError = error as { code: string };
+      switch (firebaseError.code) {
+        case "auth/user-not-found":
+          throw new Error("No user found with this email.");
+        case "auth/wrong-password":
+          throw new Error("Incorrect password.");
+        case "auth/invalid-email":
+          throw new Error("Invalid email address.");
+        case "permission-denied":
+          throw new Error("Access denied. Please contact an administrator.");
+        default:
+          throw new Error("Login failed. Please try again.");
+      }
     }
+    throw new Error("Login failed. Please try again.");
   }
 };
 
+/**
+ * Signs out the currently authenticated user
+ *
+ * @returns Promise<void>
+ *
+ * @example
+ * try {
+ *   await signOut();
+ *   console.log("Successfully signed out");
+ * } catch (error) {
+ *   console.error("Sign out failed:", error);
+ * }
+ */
 export const signOut = async (): Promise<void> => {
   await firebaseSignOut(auth);
 };
 
-// External Management
+/**
+ * External User Management Service
+ */
+
+/**
+ * Retrieves an external user by their UID
+ *
+ * @param uid - The unique identifier of the external user
+ * @returns Promise<External | null> - The external user's data or null if not found
+ *
+ * @example
+ * const external = await getExternalByUid("123456");
+ * if (external) {
+ *   console.log("Found user:", external.name);
+ * } else {
+ *   console.log("User not found");
+ * }
+ */
 export const getExternalByUid = async (
   uid: string
 ): Promise<External | null> => {
@@ -73,17 +149,56 @@ export const getExternalByUid = async (
   return docSnap.data() as External;
 };
 
+/**
+ * Creates a new external user
+ *
+ * Generates a random 6-digit UID and stores the user data in Firestore
+ *
+ * @param data - The external user's data (name, email, phone, type, feePaid)
+ * @returns Promise<string> - The generated UID
+ *
+ * @example
+ * const userData = {
+ *   name: "John Doe",
+ *   email: "john@example.com",
+ *   phone: "1234567890",
+ *   type: "student",
+ *   feePaid: true
+ * };
+ * const uid = await createExternal(userData);
+ * console.log("Created user with UID:", uid);
+ */
 export const createExternal = async (data: CSVRow): Promise<string> => {
-  const uid = Math.floor(100000 + Math.random() * 900000).toString();
+  const bid = Math.floor(100000 + Math.random() * 900000).toString();
   const external: External = {
-    uid,
+    bid,
     ...data,
     registrationDate: new Date(),
   };
-  await setDoc(doc(db, "externals", uid), external);
-  return uid;
+  await setDoc(doc(db, "externals", bid), external);
+  return bid;
 };
 
+/**
+ * Uploads multiple external users from CSV data
+ *
+ * @param rows - Array of CSV row data to create external users
+ * @returns Promise<string[]> - Array of generated UIDs
+ *
+ * @example
+ * const csvData = [
+ *   {
+ *     name: "John Doe",
+ *     email: "john@example.com",
+ *     phone: "1234567890",
+ *     type: "student",
+ *     feePaid: true
+ *   },
+ *   // ... more rows
+ * ];
+ * const uids = await uploadCSVData(csvData);
+ * console.log(`Created ${uids.length} users`);
+ */
 export const uploadCSVData = async (rows: CSVRow[]): Promise<string[]> => {
   const uids: string[] = [];
   for (const row of rows) {
@@ -93,7 +208,27 @@ export const uploadCSVData = async (rows: CSVRow[]): Promise<string[]> => {
   return uids;
 };
 
-// Action Logging
+/**
+ * Action Logging Service
+ */
+
+/**
+ * Logs an entry/exit action for an external user
+ *
+ * Creates an action log entry and updates the external user's last entry/exit timestamp
+ *
+ * @param externalUid - The UID of the external user
+ * @param action - The type of action (gate-in, check-in, check-out, gate-out)
+ * @param volunteer - The volunteer performing the action
+ * @returns Promise<void>
+ *
+ * @example
+ * await logAction("123456", "gate-in", {
+ *   uid: "vol123",
+ *   name: "Volunteer Name",
+ *   role: "volunteer"
+ * });
+ */
 export const logAction = async (
   externalUid: string,
   action: ActionLog["action"],
@@ -121,7 +256,21 @@ export const logAction = async (
   await setDoc(externalRef, updateData, { merge: true });
 };
 
-// Admin Functions
+/**
+ * Admin Service
+ */
+
+/**
+ * Retrieves all action logs
+ *
+ * @returns Promise<ActionLog[]> - Array of all action logs
+ *
+ * @example
+ * const logs = await getActionLogs();
+ * logs.forEach(log => {
+ *   console.log(`${log.volunteerName} performed ${log.action} for user ${log.externalUid}`);
+ * });
+ */
 export const getActionLogs = async (): Promise<ActionLog[]> => {
   const querySnapshot = await getDocs(collection(db, "actionLogs"));
   return querySnapshot.docs.map((doc) => ({
@@ -130,6 +279,16 @@ export const getActionLogs = async (): Promise<ActionLog[]> => {
   })) as ActionLog[];
 };
 
+/**
+ * Retrieves all external users of a specific type
+ *
+ * @param type - The type of external users to retrieve
+ * @returns Promise<External[]> - Array of external users matching the type
+ *
+ * @example
+ * const students = await getExternalsByType("student");
+ * console.log(`Found ${students.length} students`);
+ */
 export const getExternalsByType = async (
   type: External["type"]
 ): Promise<External[]> => {

@@ -39,6 +39,7 @@ const PublicRegistration: React.FC = () => {
         type: "error",
         message: "Registration failed. Please try again.",
       });
+      console.error(error);
     }
   };
 

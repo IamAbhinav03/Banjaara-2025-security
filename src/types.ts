@@ -12,7 +12,7 @@ export interface User {
 }
 
 export interface External {
-  uid: string;
+  bid: string;
   name: string;
   email: string;
   phone: string;
