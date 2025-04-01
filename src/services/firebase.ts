@@ -172,12 +172,20 @@ export const getExternalByUid = async (
  * await createExternal(userData);
  */
 export const createExternal = async (data: CSVRow): Promise<void> => {
-  const bid = data.bid;
-  const external: External = {
-    ...data,
-    registrationDate: new Date(),
-  };
-  await setDoc(doc(db, "externals", bid), external);
+  try {
+    const bid = data.bid;
+    const external: External = {
+      ...data,
+      registrationDate: new Date(),
+    };
+    await setDoc(doc(db, "externals", bid), external);
+  } catch (error) {
+    console.error(
+      `Failed to create external user with bid ${data.bid}:`,
+      error
+    );
+    throw error; // Re-throw to handle in uploadCSVData
+  }
 };
 
 /**

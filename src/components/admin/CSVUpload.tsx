@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { uploadCSVData } from "@/services/firebase";
@@ -12,19 +12,7 @@ interface CSVUploadProps {
   };
 }
 
-interface CSVRow {
-  ID: string;
-  Name: string;
-  Email: string;
-  Mobile: string;
-  Gender: string;
-  College: string;
-  PaymentStatus: string;
-  Events: string;
-  Type: string;
-}
-
-const CSVUpload: React.FC<CSVUploadProps> = ({ user }) => {
+const CSVUpload: React.FC<CSVUploadProps> = () => {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
   const [selectedType, setSelectedType] = useState("participant");
@@ -42,16 +30,16 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ user }) => {
       const rows = results.data
         .filter((row: any) => Object.values(row).some((value) => value !== ""))
         .map((row: any) => ({
-          ID: row.ID || "",
-          Name: row.Name || "",
-          Email: row.Email || "",
-          Mobile: row.Mobile || "",
-          Gender: row.Gender || "",
-          College: row.College || "",
-          PaymentStatus: row["Payment Status"] || "not paid",
-          Events:
+          bid: row.ID || "",
+          name: row.Name || "",
+          email: row.Email || "",
+          phone: row.Mobile || "",
+          gender: row.Gender || "",
+          college: row.College || "",
+          paymentStatus: row["Payment Status"] || "not paid",
+          events:
             row.Events?.split(",").map((event: string) => event.trim()) || [],
-          Type: selectedType,
+          type: selectedType,
         }));
 
       console.log(rows);
