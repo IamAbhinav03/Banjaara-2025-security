@@ -55,8 +55,8 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ user }) => {
         }));
 
       console.log(rows);
-      const uids = await uploadCSVData(rows);
-      setStatus(`Successfully uploaded ${uids.length} records`);
+      const successCount = await uploadCSVData(rows);
+      setStatus(`Successfully uploaded ${successCount} records`);
     } catch (error) {
       setStatus("Upload failed");
       console.error(error);
