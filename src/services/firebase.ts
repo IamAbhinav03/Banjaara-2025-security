@@ -277,6 +277,7 @@ export const onSpotRegistration = async (
     // Store the new user in Firestore
     console.log("External data being sent:", external);
     await setDoc(doc(db, "externals", bid), external);
+    console.log("External data set in Firestore:", external);
 
     // Update the used bids in Firestore
     await updateDoc(doc(db, "usedBids", "bids"), {
