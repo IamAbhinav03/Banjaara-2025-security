@@ -148,6 +148,12 @@ export const createExternal = async (data: CSVRow): Promise<void> => {
     const external: External = {
       ...data,
       registrationDate: new Date(),
+      paymentStatus: "not paid",
+      gateIn: false,
+      gateOut: false,
+      checkIn: false,
+      checkOut: false,
+      insideCampus: false,
     };
     await setDoc(doc(db, "externals", bid), external);
     await updateDoc(doc(db, "userBids", "bids"), {
