@@ -154,6 +154,7 @@ export const createExternal = async (data: CSVRow): Promise<void> => {
       checkIn: false,
       checkOut: false,
       insideCampus: false,
+      status: "not arrived",
     };
     await setDoc(doc(db, "externals", bid), external);
     await updateDoc(doc(db, "usedBids", "bids"), {
@@ -272,6 +273,7 @@ export const onSpotRegistration = async (
       checkOut: false,
       insideCampus: false,
       events: [],
+      status: "not arrived",
     };
 
     // Store the new user in Firestore
@@ -425,4 +427,32 @@ export const getExternalsByType = async (
   const q = query(collection(db, "externals"), where("type", "==", type));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data() as External);
+};
+
+/**
+ * Updates the status of an external user
+ *
+ * @param externalUid - The UID of the external user
+ * @param status - The new status to set
+ * @returns Promise<void>
+ *
+ * @example
+ * await updateExternalStatus("123456", "arrived");
+ * console.log("Status updated successfully");
+ */
+export const updateExternalStatus = async (
+  externalUid: string,
+  status: External["status"]
+): Promise<void> => {
+  try {
+    const externalRef = doc(db, "externals", externalUid);
+    await updateDoc(externalRef, { status });
+    console.log(`Status of external user ${externalUid} updated to ${status}`);
+  } catch (error) {
+    console.error(
+      `Failed to update status for external user ${externalUid}:`,
+      error
+    );
+    throw new Error("Failed to update status. Please try again.");
+  }
 };

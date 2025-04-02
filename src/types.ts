@@ -32,6 +32,12 @@ export interface External {
   lastEntry?: Date;
   lastExit?: Date;
   events: string[];
+  status:
+    | "not arrived"
+    | "gated in"
+    | "checked in"
+    | "checked out"
+    | "gate out";
 }
 
 export interface ActionLog {

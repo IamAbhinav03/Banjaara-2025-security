@@ -7,6 +7,7 @@ import { User, External, ActionLog } from "@/types";
 import Login from "../auth/Login";
 import CSVUpload from "../admin/CSVUpload";
 import { Loader } from "lucide-react";
+import { updateExternalStatus } from "@/services/firebase";
 
 /**
  * EntryExitPortal component that manages user entry and exit
@@ -48,8 +49,8 @@ const EntryExitPortal: React.FC = () => {
     }
   };
 
-  const scriptUrl =
-    "https://script.google.com/macros/s/AKfycbzCWxmLdlHW6iXjn6qPpWa5a7Th1PsCdZ7-Lhknx_r3ctw4ykzj-P89Mm07i8js4mTW/exec";
+  // const scriptUrl =
+  //   "https://script.google.com/macros/s/AKfycbzCWxmLdlHW6iXjn6qPpWa5a7Th1PsCdZ7-Lhknx_r3ctw4ykzj-P89Mm07i8js4mTW/exec";
   /**
    * Handles entry/exit actions for a user
    * @param action - The type of action to perform (gate-in, check-in, check-out, gate-out)
@@ -71,45 +72,54 @@ const EntryExitPortal: React.FC = () => {
 
       await logAction(uid, action, loggedInUser);
 
+      let newStatus: External["status"] = userData.status;
+      if (action === "gate-in") newStatus = "gated in";
+      else if (action === "check-in") newStatus = "checked in";
+      else if (action === "check-out") newStatus = "checked out";
+      else if (action === "gate-out") newStatus = "gate out";
+
+      // Update user data with the new status
+      await updateExternalStatus(uid, newStatus);
+
       // Format data for Google Sheets
-      const timestamp = new Date().toISOString();
-      const dataRow = [
-        timestamp,
-        uid,
-        userData.name,
-        userData.type,
-        userData.phone,
-        userData.email,
-      ];
+      // const timestamp = new Date().toISOString();
+      // const dataRow = [
+      //   timestamp,
+      //   uid,
+      //   userData.name,
+      //   userData.type,
+      //   userData.phone,
+      //   userData.email,
+      // ];
 
       // Convert action format to match sheet names
-      let sheetAction = "";
-      if (action === "gate-in") sheetAction = "GateIn";
-      else if (action === "gate-out") sheetAction = "GateOut";
-      else if (action === "check-in") sheetAction = "CheckIn";
-      else if (action === "check-out") sheetAction = "CheckOut";
-      // console.log("Sheet action:", sheetAction);
-      // console.log("Data row:", dataRow);
-      fetch(scriptUrl, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          e: JSON.stringify(dataRow), // Convert the full array to a JSON string
-          a: sheetAction,
-        }).toString(),
-      })
-        .then(() => {
-          console.log("Request sent to Google Sheets");
-          setStatus(`${action} successful`);
-        })
-        .catch((error) => {
-          console.error("Error sending data:", error);
-          setStatus("Failed to record action remotely");
-        })
-        .finally(() => console.log("Request sent to Google Sheets successful"));
+      // let sheetAction = "";
+      // if (action === "gate-in") sheetAction = "GateIn";
+      // else if (action === "gate-out") sheetAction = "GateOut";
+      // else if (action === "check-in") sheetAction = "CheckIn";
+      // else if (action === "check-out") sheetAction = "CheckOut";
+      // // console.log("Sheet action:", sheetAction);
+      // // console.log("Data row:", dataRow);
+      // fetch(scriptUrl, {
+      //   method: "POST",
+      //   mode: "no-cors",
+      //   headers: {
+      //     "Content-Type": "application/x-www-form-urlencoded",
+      //   },
+      //   body: new URLSearchParams({
+      //     e: JSON.stringify(dataRow), // Convert the full array to a JSON string
+      //     a: sheetAction,
+      //   }).toString(),
+      // })
+      //   .then(() => {
+      //     console.log("Request sent to Google Sheets");
+      //     setStatus(`${action} successful`);
+      //   })
+      //   .catch((error) => {
+      //     console.error("Error sending data:", error);
+      //     setStatus("Failed to record action remotely");
+      //   })
+      //   .finally(() => console.log("Request sent to Google Sheets successful"));
     } catch (error) {
       setStatus("Action failed");
       console.error(error);
@@ -196,6 +206,12 @@ const EntryExitPortal: React.FC = () => {
                         }`}
                       >
                         {userData.paymentStatus}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Status:</span>
+                      <p className="font-medium capitalize">
+                        {userData.status}
                       </p>
                     </div>
                   </div>
