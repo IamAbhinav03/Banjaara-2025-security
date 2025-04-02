@@ -2,44 +2,46 @@ import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createExternal } from "@/services/firebase";
-import { ExternalType } from "@/types";
+import { onSpotRegistration } from "@/services/firebase";
 
 const PublicRegistration: React.FC = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    college: "",
   });
   const [status, setStatus] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
-  const [generatedUid, setGeneratedUid] = useState<string | null>(null);
+  const [generatedBid, setGeneratedBid] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
-    setGeneratedUid(null);
+    setGeneratedBid(null);
 
     try {
-      const uid = await createExternal({
-        ...formData,
-        type: "on-the-spot" as ExternalType,
-        feePaid: false,
-      });
-      setGeneratedUid(uid);
+      // Call the onSpotRegistration function with the form data
+      const bid = await onSpotRegistration(
+        formData.name,
+        formData.email,
+        formData.phone,
+        formData.college
+      );
+      setGeneratedBid(bid);
       setStatus({
         type: "success",
-        message: "Registration successful! Please save your UID.",
+        message: "Registration successful! Please save your BID.",
       });
-      setFormData({ name: "", email: "", phone: "" });
+      setFormData({ name: "", email: "", phone: "", college: "" });
     } catch (error) {
       setStatus({
         type: "error",
         message: "Registration failed. Please try again.",
       });
-      console.error(error);
+      console.error("Error during registration:", error);
     }
   };
 
@@ -118,6 +120,26 @@ const PublicRegistration: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label
+                  htmlFor="college"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  College Name
+                </label>
+                <Input
+                  id="college"
+                  type="text"
+                  required
+                  value={formData.college}
+                  onChange={(e) =>
+                    setFormData({ ...formData, college: e.target.value })
+                  }
+                  className="mt-1"
+                  placeholder="Enter your college name"
+                />
+              </div>
+
               <Button type="submit" className="w-full">
                 Register
               </Button>
@@ -135,16 +157,16 @@ const PublicRegistration: React.FC = () => {
               </div>
             )}
 
-            {generatedUid && (
+            {generatedBid && (
               <div className="mt-6 p-4 bg-blue-50 rounded-md">
                 <h3 className="text-lg font-medium text-blue-900">
-                  Your Entry Pass UID
+                  Your Entry Pass BID
                 </h3>
                 <p className="mt-2 text-2xl font-bold text-blue-700">
-                  {generatedUid}
+                  {generatedBid}
                 </p>
                 <p className="mt-2 text-sm text-blue-600">
-                  Please save this UID. You'll need it for entry and exit.
+                  Please save this BID. You'll need it for entry and exit.
                 </p>
               </div>
             )}

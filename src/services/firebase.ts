@@ -13,7 +13,6 @@
 import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-  User as FirebaseUser,
 } from "firebase/auth";
 import {
   collection,
@@ -23,13 +22,13 @@ import {
   setDoc,
   query,
   where,
-  Timestamp,
   addDoc,
   arrayUnion,
   updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { User, External, ActionLog, CSVRow } from "../types";
+import { triggerAsyncId } from "node:async_hooks";
 
 /**
  * Authentication Service
@@ -123,35 +122,6 @@ export const signOut = async (): Promise<void> => {
 };
 
 /**
- * External User Management Service
- */
-
-/**
- * Retrieves an external user by their UID
- *
- * @param uid - The unique identifier of the external user
- * @returns Promise<External | null> - The external user's data or null if not found
- *
- * @example
- * const external = await getExternalByUid("123456");
- * if (external) {
- *   console.log("Found user:", external.name);
- * } else {
- *   console.log("User not found");
- * }
- */
-export const getExternalByUid = async (
-  uid: string
-): Promise<External | null> => {
-  const docRef = doc(db, "externals", uid);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) {
-    return null;
-  }
-  return docSnap.data() as External;
-};
-
-/**
  * Creates a new external user
  *
  * Uses the CSV ID as the bid and stores the user data in Firestore
@@ -228,6 +198,116 @@ export const uploadCSVData = async (rows: CSVRow[]): Promise<number> => {
     }
   }
   return successCount;
+};
+
+/**
+ * Generates a new bid using a 4-character alphanumeric ID
+ * Excludes confusing characters (O, 0, I, 1)
+ * Ensures the generated bid is unique by checking Firestore
+ *
+ * @returns Promise<string> - A unique bid
+ */
+const generateUniqueBid = async (): Promise<string> => {
+  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789"; // No 0, 1 for avoiding confusion
+  let bid = "";
+  let isUnique = false;
+
+  while (!isUnique) {
+    // Generate a random 4-character bid
+    bid = Array.from(
+      { length: 4 },
+      () => charset[Math.floor(Math.random() * charset.length)]
+    ).join("");
+
+    // Check Firestore if the bid already exists
+    const docRef = doc(db, "usedBids", "bids");
+    const docSnap = await getDoc(docRef);
+    const usedBids = docSnap.exists() ? docSnap.data().usedBids : [];
+
+    if (!usedBids.includes(bid)) {
+      isUnique = true;
+    }
+  }
+
+  return bid;
+};
+
+/**
+ * On-the-spot registration for a new external user
+ *
+ * @param name - Name of the user
+ * @param email - Email of the user
+ * @param phone - Phone number of the user
+ * @param college - College name of the user
+ * @returns Promise<string> - The generated bid
+ */
+export const onSpotRegistration = async (
+  name: string,
+  email: string,
+  phone: string,
+  college: string
+): Promise<string> => {
+  try {
+    // Generate a unique bid
+    console.log("Generating unique bid...");
+    const bid = await generateUniqueBid();
+    console.log("Unique bid generated:", bid);
+    // Create an external user object with the provided data and the generated bid
+    const external = {
+      bid,
+      name,
+      email,
+      phone,
+      college,
+      type: "on-the-spot",
+      paymentStatus: "not paid",
+      registrationDate: new Date(),
+    };
+
+    // Store the new user in Firestore
+    console.log("External data being sent:", external);
+    await setDoc(doc(db, "externals", bid), external);
+
+    // Update the used bids in Firestore
+    await updateDoc(doc(db, "usedBids", "bids"), {
+      usedBids: arrayUnion(bid),
+    });
+
+    console.log("Generated Bid:", bid);
+    return bid;
+  } catch (error) {
+    console.error("Error in on-the-spot registration:", error);
+    throw new Error("Registration failed. Please try again.");
+  }
+};
+
+/**
+ * External User Management Service
+ */
+
+/**
+ * Retrieves an external user by their UID
+ *
+ * @param uid - The unique identifier of the external user
+ * @returns Promise<External | null> - The external user's data or null if not found
+ *
+ * @example
+ * const external = await getExternalByUid("123456");
+ * if (external) {
+ *   console.log("Found user:", external.name);
+ * } else {
+ *   console.log("User not found");
+ * }
+ */
+export const getExternalByUid = async (
+  uid: string
+): Promise<External | null> => {
+  const docRef = doc(db, "externals", uid);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) {
+    return null;
+  }
+  return docSnap.data() as External;
 };
 
 /**
