@@ -54,7 +54,7 @@ const EntryExitPortal: React.FC = () => {
       
       // Format data for Google Sheets
       const timestamp = new Date().toISOString();
-      const dataRow = [timestamp, uid, userData.name, userData.type, loggedInUser.email];
+      const dataRow = [timestamp, uid, userData.name, userData.type, userData.phone, userData.email];
       
       // Convert action format to match sheet names
       let sheetAction = "";
