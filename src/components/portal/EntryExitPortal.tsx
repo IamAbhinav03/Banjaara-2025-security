@@ -231,6 +231,18 @@ const EntryExitPortal: React.FC = () => {
           </CardContent>
         </Card>
 
+        <div className="text-center mt-2">
+  <a
+    href="https://docs.google.com/spreadsheets/d/1MEGvGRHRyYhQsZEFsZijlMKt4fU8Vy9SN4VNANBarHg/edit?gid=1862116381#gid=1862116381"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-600 hover:underline text-sm"
+  >
+    View Google Sheets
+  </a>
+</div>
+
+
         {loggedInUser.role === "admin" && (
           <div className="mt-4">
             <CSVUpload user={loggedInUser} />
