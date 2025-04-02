@@ -42,6 +42,7 @@ const EntryExitPortal: React.FC = () => {
     }
   };
 
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbzCWxmLdlHW6iXjn6qPpWa5a7Th1PsCdZ7-Lhknx_r3ctw4ykzj-P89Mm07i8js4mTW/exec";
   /**
    * Handles entry/exit actions for a user
    * @param action - The type of action to perform (gate-in, check-in, check-out, gate-out)
@@ -50,14 +51,46 @@ const EntryExitPortal: React.FC = () => {
     if (!loggedInUser || !userData) return;
     try {
       await logAction(uid, action, loggedInUser);
+      
+      // Format data for Google Sheets
+      const timestamp = new Date().toISOString();
+      const dataRow = [timestamp, uid, userData.name, userData.type, loggedInUser.email];
+      
+      // Convert action format to match sheet names
+      let sheetAction = "";
+      if (action === "gate-in") sheetAction = "GateIn";
+      else if (action === "gate-out") sheetAction = "GateOut";
+      else if (action === "check-in") sheetAction = "CheckIn";
+      else if (action === "check-out") sheetAction = "CheckOut";
+      // console.log("Sheet action:", sheetAction);
+      // console.log("Data row:", dataRow);      
+      fetch(scriptUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          e: JSON.stringify(dataRow), // Convert the full array to a JSON string
+          a: sheetAction
+        }).toString()
+      })
+      .then(() => {
+      console.log("Request sent to Google Sheets");
       setStatus(`${action} successful`);
+      })
+      .catch((error) => {
+      console.error("Error sending data:", error);
+      setStatus("Failed to record action remotely");
+      })
+      .finally(() => {
       fetchUserData();
+      });
     } catch (error) {
       setStatus("Action failed");
       console.error(error);
     }
   };
-
   /**
    * Handles user logout
    */
