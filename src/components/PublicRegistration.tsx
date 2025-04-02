@@ -27,8 +27,8 @@ const PublicRegistration: React.FC = () => {
       const bid = await onSpotRegistration(
         formData.name,
         formData.email,
-        formData.phone,
-        formData.college
+        formData.phone
+        // formData.college
       );
       setGeneratedBid(bid);
       setStatus({

@@ -249,8 +249,8 @@ const generateUniqueBid = async (): Promise<string> => {
 export const onSpotRegistration = async (
   name: string,
   email: string,
-  phone: string,
-  college: string
+  phone: string
+  // college: string
 ): Promise<string> => {
   try {
     // Generate a unique bid
@@ -258,15 +258,19 @@ export const onSpotRegistration = async (
     const bid = await generateUniqueBid();
     console.log("Unique bid generated:", bid);
     // Create an external user object with the provided data and the generated bid
-    const external = {
+    const external: External = {
       bid,
       name,
       email,
       phone,
-      college,
       type: "on-the-spot",
       paymentStatus: "not paid",
       registrationDate: new Date(),
+      gateIn: false,
+      gateOut: false,
+      checkIn: false,
+      checkOut: false,
+      insideCampus: false,
     };
 
     // Store the new user in Firestore
