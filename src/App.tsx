@@ -1,7 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import EntryExitPortal from "./components/portal/EntryExitPortal";
-import PublicRegistration from "./components/PublicRegistration";
 
 /**
  * Main App component that handles routing and layout
@@ -12,12 +10,13 @@ import PublicRegistration from "./components/PublicRegistration";
  */
 const App: React.FC = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/register" element={<PublicRegistration />} />
-        <Route path="/" element={<EntryExitPortal />} />
-      </Routes>
-    </Router>
+    // <Router>
+    //   <Routes>
+    //     <Route path="/register" element={<PublicRegistration />} />
+    //     <Route path="/" element={<EntryExitPortal />} />
+    //   </Routes>
+    // </Router>
+    <EntryExitPortal />
   );
 };
 
