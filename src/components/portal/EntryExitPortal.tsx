@@ -6,6 +6,7 @@ import { signOut, getExternalByUid, logAction } from "@/services/firebase";
 import { User, External, ActionLog } from "@/types";
 import Login from "../auth/Login";
 import CSVUpload from "../admin/CSVUpload";
+import { Loader } from "lucide-react";
 
 /**
  * EntryExitPortal component that manages user entry and exit
@@ -21,6 +22,11 @@ const EntryExitPortal: React.FC = () => {
   const [uid, setUid] = useState("");
   const [userData, setUserData] = useState<External | null>(null);
   const [status, setStatus] = useState("");
+  const [feepaidloading, setFeepaidloading] = useState(false);
+  const [gateinloading, setGateinloading] = useState(false);
+  const [checkinloading, setCheckinloading] = useState(false);
+  const [checkoutloading, setCheckoutloading] = useState(false);
+  const [gateoutloading, setGateoutloading] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
 
   /**
@@ -42,7 +48,8 @@ const EntryExitPortal: React.FC = () => {
     }
   };
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbzCWxmLdlHW6iXjn6qPpWa5a7Th1PsCdZ7-Lhknx_r3ctw4ykzj-P89Mm07i8js4mTW/exec";
+  const scriptUrl =
+    "https://script.google.com/macros/s/AKfycbzCWxmLdlHW6iXjn6qPpWa5a7Th1PsCdZ7-Lhknx_r3ctw4ykzj-P89Mm07i8js4mTW/exec";
   /**
    * Handles entry/exit actions for a user
    * @param action - The type of action to perform (gate-in, check-in, check-out, gate-out)
@@ -50,12 +57,31 @@ const EntryExitPortal: React.FC = () => {
   const handleAction = async (action: ActionLog["action"]) => {
     if (!loggedInUser || !userData) return;
     try {
+      if (action === "payment") {
+        setFeepaidloading(true);
+      } else if (action === "gate-in") {
+        setGateinloading(true);
+      } else if (action === "check-in") {
+        setCheckinloading(true);
+      } else if (action === "check-out") {
+        setCheckoutloading(true);
+      } else if (action === "gate-out") {
+        setGateoutloading(true);
+      }
+
       await logAction(uid, action, loggedInUser);
-      
+
       // Format data for Google Sheets
       const timestamp = new Date().toISOString();
-      const dataRow = [timestamp, uid, userData.name, userData.type, userData.phone, userData.email];
-      
+      const dataRow = [
+        timestamp,
+        uid,
+        userData.name,
+        userData.type,
+        userData.phone,
+        userData.email,
+      ];
+
       // Convert action format to match sheet names
       let sheetAction = "";
       if (action === "gate-in") sheetAction = "GateIn";
@@ -63,7 +89,7 @@ const EntryExitPortal: React.FC = () => {
       else if (action === "check-in") sheetAction = "CheckIn";
       else if (action === "check-out") sheetAction = "CheckOut";
       // console.log("Sheet action:", sheetAction);
-      // console.log("Data row:", dataRow);      
+      // console.log("Data row:", dataRow);
       fetch(scriptUrl, {
         method: "POST",
         mode: "no-cors",
@@ -72,23 +98,28 @@ const EntryExitPortal: React.FC = () => {
         },
         body: new URLSearchParams({
           e: JSON.stringify(dataRow), // Convert the full array to a JSON string
-          a: sheetAction
-        }).toString()
+          a: sheetAction,
+        }).toString(),
       })
-      .then(() => {
-      console.log("Request sent to Google Sheets");
-      setStatus(`${action} successful`);
-      })
-      .catch((error) => {
-      console.error("Error sending data:", error);
-      setStatus("Failed to record action remotely");
-      })
-      .finally(() => {
-      fetchUserData();
-      });
+        .then(() => {
+          console.log("Request sent to Google Sheets");
+          setStatus(`${action} successful`);
+        })
+        .catch((error) => {
+          console.error("Error sending data:", error);
+          setStatus("Failed to record action remotely");
+        })
+        .finally(() => console.log("Request sent to Google Sheets successful"));
     } catch (error) {
       setStatus("Action failed");
       console.error(error);
+    } finally {
+      setFeepaidloading(false);
+      setGateinloading(false);
+      setCheckinloading(false);
+      setCheckoutloading(false);
+      setGateoutloading(false);
+      fetchUserData();
     }
   };
   /**
@@ -193,7 +224,11 @@ const EntryExitPortal: React.FC = () => {
                     disabled={userData.paymentStatus === "paid"}
                     className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
                   >
-                    Fees Paid
+                    {feepaidloading ? (
+                      <Loader className="animate-spin" />
+                    ) : (
+                      "Fees Paid"
+                    )}
                   </Button>
                   <Button
                     onClick={() => handleAction("gate-in")}
@@ -202,28 +237,44 @@ const EntryExitPortal: React.FC = () => {
                     }
                     className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
                   >
-                    Gate In
+                    {gateinloading ? (
+                      <Loader className="animate-spin" />
+                    ) : (
+                      "Gate In"
+                    )}
                   </Button>
                   <Button
                     onClick={() => handleAction("check-in")}
                     disabled={!userData.gateIn || userData.insideCampus}
                     className="bg-purple-500 hover:bg-purple-600 text-white disabled:opacity-50"
                   >
-                    Check In
+                    {checkinloading ? (
+                      <Loader className="animate-spin" />
+                    ) : (
+                      "Check In"
+                    )}
                   </Button>
                   <Button
                     onClick={() => handleAction("check-out")}
                     disabled={!userData.insideCampus || userData.checkOut}
                     className="bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50"
                   >
-                    Check Out
+                    {checkoutloading ? (
+                      <Loader className="animate-spin" />
+                    ) : (
+                      "Check Out"
+                    )}
                   </Button>
                   <Button
                     onClick={() => handleAction("gate-out")}
                     disabled={!userData.checkOut || userData.gateOut}
                     className="col-span-2 bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
                   >
-                    Gate Out
+                    {gateoutloading ? (
+                      <Loader className="animate-spin" />
+                    ) : (
+                      "Gate Out"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -232,16 +283,15 @@ const EntryExitPortal: React.FC = () => {
         </Card>
 
         <div className="text-center mt-2">
-  <a
-    href="https://docs.google.com/spreadsheets/d/1MEGvGRHRyYhQsZEFsZijlMKt4fU8Vy9SN4VNANBarHg/edit?gid=1862116381#gid=1862116381"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-600 hover:underline text-sm"
-  >
-    View Google Sheets
-  </a>
-</div>
-
+          <a
+            href="https://docs.google.com/spreadsheets/d/1MEGvGRHRyYhQsZEFsZijlMKt4fU8Vy9SN4VNANBarHg/edit?gid=1862116381#gid=1862116381"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline text-sm"
+          >
+            View Google Sheets
+          </a>
+        </div>
 
         {loggedInUser.role === "admin" && (
           <div className="mt-4">
