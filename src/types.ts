@@ -31,6 +31,7 @@ export interface External {
   insideCampus: boolean;
   lastEntry?: Date;
   lastExit?: Date;
+  events: string[];
 }
 
 export interface ActionLog {
@@ -48,4 +49,5 @@ export interface CSVRow {
   phone: string;
   type: ExternalType;
   paymentStatus: string;
+  events: string[];
 }

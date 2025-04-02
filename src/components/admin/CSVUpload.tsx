@@ -50,6 +50,7 @@ const CSVUpload: React.FC<CSVUploadProps> = () => {
           phone: row.Mobile || "",
           type: selectedType,
           paymentStatus: row["Payment Status"] || "not paid",
+          events: (row.Events || "").split(",").map((event) => event.trim()),
         }));
 
       console.log(rows);

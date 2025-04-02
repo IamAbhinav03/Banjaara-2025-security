@@ -76,86 +76,135 @@ const EntryExitPortal: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <Card className="mb-4 shadow-lg">
-        <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">Entry-Exit Portal</h1>
-            <Button onClick={handleLogout} variant="outline">
-              Logout
-            </Button>
-          </div>
-          <Input
-            placeholder="Enter UID"
-            value={uid}
-            onChange={(e) => setUid(e.target.value)}
-            className="mb-2"
-          />
-          <Button onClick={fetchUserData} className="mb-2">
-            Search
-          </Button>
-          {status && <p className="text-red-500">{status}</p>}
-          {userData && (
-            <div className="mt-4">
-              <p>
-                <strong>Name:</strong> {userData.name}
-              </p>
-              <p>
-                <strong>Type:</strong> {userData.type}
-              </p>
-              <p>
-                <strong>Payment Status:</strong>
-                {userData.paymentStatus}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button
-                  onClick={() => handleAction("payment")}
-                  disabled={userData.paymentStatus === "paid" ? true : false}
-                >
-                  Fees Paid
-                </Button>
-                <Button
-                  onClick={() => handleAction("gate-in")}
-                  disabled={
-                    userData.paymentStatus === "paid" && !userData.gateIn
-                      ? false
-                      : true
-                  }
-                >
-                  Gate In
-                </Button>
-                <Button
-                  onClick={() => handleAction("check-in")}
-                  disabled={
-                    userData.gateIn && !userData.insideCampus ? false : true
-                  }
-                >
-                  Check In
-                </Button>
-                <Button
-                  onClick={() => handleAction("check-out")}
-                  disabled={
-                    userData.insideCampus && !userData.checkOut ? false : true
-                  }
-                >
-                  Check Out
-                </Button>
-                <Button
-                  onClick={() => handleAction("gate-out")}
-                  disabled={
-                    userData.checkOut && !userData.gateOut ? false : true
-                  }
-                >
-                  Gate Out
-                </Button>
-              </div>
+    <div className="min-h-screen p-4 bg-gray-50">
+      <div className="max-w-md mx-auto space-y-4">
+        <Card className="shadow-lg">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">
+                Entry-Exit Portal
+              </h1>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="text-sm px-3 py-1"
+              >
+                Logout
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-      {loggedInUser.role === "admin" && <CSVUpload user={loggedInUser} />}
+
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder="Enter UID"
+                value={uid}
+                onChange={(e) => setUid(e.target.value)}
+                className="flex-1 text-sm"
+              />
+              <Button
+                onClick={fetchUserData}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                Search
+              </Button>
+            </div>
+
+            {status && <p className="text-red-500 text-sm mb-4">{status}</p>}
+
+            {userData && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-600">Name:</span>
+                      <p className="font-medium">{userData.name}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Type:</span>
+                      <p className="font-medium capitalize">{userData.type}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Payment Status:</span>
+                      <p
+                        className={`font-medium ${
+                          userData.paymentStatus === "paid"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {userData.paymentStatus}
+                      </p>
+                    </div>
+                  </div>
+
+                  {userData.type === "participant" &&
+                    userData.events.length > 0 && (
+                      <div className="mt-3 pt-3 border-t">
+                        <span className="text-gray-600 text-sm">Events:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {userData.events.map((event, index) => (
+                            <span
+                              key={index}
+                              className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                            >
+                              {event}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => handleAction("payment")}
+                    disabled={userData.paymentStatus === "paid"}
+                    className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
+                  >
+                    Fees Paid
+                  </Button>
+                  <Button
+                    onClick={() => handleAction("gate-in")}
+                    disabled={
+                      userData.paymentStatus !== "paid" || userData.gateIn
+                    }
+                    className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
+                  >
+                    Gate In
+                  </Button>
+                  <Button
+                    onClick={() => handleAction("check-in")}
+                    disabled={!userData.gateIn || userData.insideCampus}
+                    className="bg-purple-500 hover:bg-purple-600 text-white disabled:opacity-50"
+                  >
+                    Check In
+                  </Button>
+                  <Button
+                    onClick={() => handleAction("check-out")}
+                    disabled={!userData.insideCampus || userData.checkOut}
+                    className="bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50"
+                  >
+                    Check Out
+                  </Button>
+                  <Button
+                    onClick={() => handleAction("gate-out")}
+                    disabled={!userData.checkOut || userData.gateOut}
+                    className="col-span-2 bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                  >
+                    Gate Out
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {loggedInUser.role === "admin" && (
+          <div className="mt-4">
+            <CSVUpload user={loggedInUser} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
 export default EntryExitPortal;

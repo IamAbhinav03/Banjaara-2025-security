@@ -271,6 +271,7 @@ export const onSpotRegistration = async (
       checkIn: false,
       checkOut: false,
       insideCampus: false,
+      events: [],
     };
 
     // Store the new user in Firestore
