@@ -4,6 +4,20 @@ import { Button } from "@/components/ui/button";
 import { uploadCSVData } from "@/services/firebase";
 import Papa from "papaparse";
 import { Loader } from "lucide-react";
+import { CSVRow, ExternalType } from "@/types";
+
+// Define a type for the raw CSV data
+interface RawCSVData {
+  ID: string;
+  Name: string;
+  Email: string;
+  Mobile: string;
+  Gender?: string;
+  College?: string;
+  "Payment Status"?: string;
+  Events?: string;
+  [key: string]: string | undefined;
+}
 
 interface CSVUploadProps {
   user: {
@@ -15,7 +29,7 @@ interface CSVUploadProps {
 const CSVUpload: React.FC<CSVUploadProps> = () => {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
-  const [selectedType, setSelectedType] = useState("participant");
+  const [selectedType, setSelectedType] = useState<ExternalType>("participant");
   const [loading, setLoading] = useState(false);
 
   const handleUpload = async () => {
@@ -26,20 +40,16 @@ const CSVUpload: React.FC<CSVUploadProps> = () => {
     setLoading(true);
     try {
       const text = await file.text();
-      const results = Papa.parse(text, { header: true });
-      const rows = results.data
-        .filter((row: any) => Object.values(row).some((value) => value !== ""))
-        .map((row: any) => ({
+      const results = Papa.parse<RawCSVData>(text, { header: true });
+      const rows: CSVRow[] = results.data
+        .filter((row) => Object.values(row).some((value) => value !== ""))
+        .map((row) => ({
           bid: row.ID || "",
           name: row.Name || "",
           email: row.Email || "",
           phone: row.Mobile || "",
-          gender: row.Gender || "",
-          college: row.College || "",
-          paymentStatus: row["Payment Status"] || "not paid",
-          events:
-            row.Events?.split(",").map((event: string) => event.trim()) || [],
           type: selectedType,
+          paymentStatus: row["Payment Status"] || "not paid",
         }));
 
       console.log(rows);
@@ -65,7 +75,7 @@ const CSVUpload: React.FC<CSVUploadProps> = () => {
             className="mb-2 w-full p-2 border rounded"
           />
           <select
-            onChange={(e) => setSelectedType(e.target.value)}
+            onChange={(e) => setSelectedType(e.target.value as ExternalType)}
             className="mb-2 w-full p-2 border rounded"
             defaultValue="participant"
           >

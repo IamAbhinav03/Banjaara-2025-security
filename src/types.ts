@@ -47,5 +47,5 @@ export interface CSVRow {
   email: string;
   phone: string;
   type: ExternalType;
-  feePaid: boolean;
+  paymentStatus: string;
 }

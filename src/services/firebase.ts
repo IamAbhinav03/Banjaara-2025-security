@@ -156,7 +156,7 @@ export const createExternal = async (data: CSVRow): Promise<void> => {
       insideCampus: false,
     };
     await setDoc(doc(db, "externals", bid), external);
-    await updateDoc(doc(db, "userBids", "bids"), {
+    await updateDoc(doc(db, "usedBids", "bids"), {
       usedBids: arrayUnion(bid),
     });
   } catch (error) {
