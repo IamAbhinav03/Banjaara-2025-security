@@ -2,7 +2,12 @@ export type UserRole = "admin" | "volunteer";
 
 export type ExternalType = "participant" | "attendee" | "on-the-spot";
 
-export type ActionType = "gate-in" | "check-in" | "check-out" | "gate-out";
+export type ActionType =
+  | "gate-in"
+  | "check-in"
+  | "check-out"
+  | "gate-out"
+  | "payment";
 
 export interface User {
   uid: string;
@@ -16,9 +21,14 @@ export interface External {
   name: string;
   email: string;
   phone: string;
+  paymentStatus: string;
   type: ExternalType;
-  feePaid: boolean;
   registrationDate: Date;
+  gateIn: boolean;
+  gateOut: boolean;
+  checkIn: boolean;
+  checkOut: boolean;
+  insideCampus: boolean;
   lastEntry?: Date;
   lastExit?: Date;
 }
@@ -28,7 +38,6 @@ export interface ActionLog {
   externalUid: string;
   action: ActionType;
   timestamp: Date;
-  volunteerUid: string;
   volunteerName: string;
 }
 

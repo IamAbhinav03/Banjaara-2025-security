@@ -14,6 +14,7 @@ import CSVUpload from "../admin/CSVUpload";
  * - User authentication
  * - Searching for users by UID
  * - Recording entry/exit events (gate-in, check-in, check-out, gate-out)
+ * - Payment status management
  * - CSV upload for admin users
  */
 const EntryExitPortal: React.FC = () => {
@@ -30,6 +31,7 @@ const EntryExitPortal: React.FC = () => {
       const data = await getExternalByUid(uid);
       if (data) {
         setUserData(data);
+        console.log("User data fetched:", data);
         setStatus("");
       } else {
         setStatus("User not found");
@@ -46,11 +48,9 @@ const EntryExitPortal: React.FC = () => {
    */
   const handleAction = async (action: ActionLog["action"]) => {
     if (!loggedInUser || !userData) return;
-
     try {
       await logAction(uid, action, loggedInUser);
       setStatus(`${action} successful`);
-      // Refresh user data
       fetchUserData();
     } catch (error) {
       setStatus("Action failed");
@@ -85,9 +85,6 @@ const EntryExitPortal: React.FC = () => {
               Logout
             </Button>
           </div>
-          <p className="text-sm text-gray-600 mb-2">
-            Logged in as {loggedInUser.name} ({loggedInUser.role})
-          </p>
           <Input
             placeholder="Enter UID"
             value={uid}
@@ -107,37 +104,48 @@ const EntryExitPortal: React.FC = () => {
                 <strong>Type:</strong> {userData.type}
               </p>
               <p>
-                <strong>Fee Paid:</strong> {userData.feePaid ? "Yes" : "No"}
-              </p>
-              <p>
-                <strong>Last Entry:</strong>{" "}
-                {userData.lastEntry
-                  ? new Date(userData.lastEntry).toLocaleString()
-                  : "Never"}
-              </p>
-              <p>
-                <strong>Last Exit:</strong>{" "}
-                {userData.lastExit
-                  ? new Date(userData.lastExit).toLocaleString()
-                  : "Never"}
+                <strong>Payment Status:</strong>
+                {userData.paymentStatus}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button
+                  onClick={() => handleAction("payment")}
+                  disabled={userData.paymentStatus === "paid" ? true : false}
+                >
+                  Fees Paid
+                </Button>
+                <Button
                   onClick={() => handleAction("gate-in")}
-                  disabled={!userData.feePaid}
+                  disabled={
+                    userData.paymentStatus === "paid" && !userData.gateIn
+                      ? false
+                      : true
+                  }
                 >
                   Gate In
                 </Button>
                 <Button
                   onClick={() => handleAction("check-in")}
-                  disabled={!userData.feePaid}
+                  disabled={
+                    userData.gateIn && !userData.insideCampus ? false : true
+                  }
                 >
                   Check In
                 </Button>
-                <Button onClick={() => handleAction("check-out")}>
+                <Button
+                  onClick={() => handleAction("check-out")}
+                  disabled={
+                    userData.insideCampus && !userData.checkOut ? false : true
+                  }
+                >
                   Check Out
                 </Button>
-                <Button onClick={() => handleAction("gate-out")}>
+                <Button
+                  onClick={() => handleAction("gate-out")}
+                  disabled={
+                    userData.checkOut && !userData.gateOut ? false : true
+                  }
+                >
                   Gate Out
                 </Button>
               </div>

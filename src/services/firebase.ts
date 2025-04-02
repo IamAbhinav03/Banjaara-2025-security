@@ -28,7 +28,6 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { User, External, ActionLog, CSVRow } from "../types";
-import { triggerAsyncId } from "node:async_hooks";
 
 /**
  * Authentication Service
@@ -331,6 +330,7 @@ export const getExternalByUid = async (
  *   role: "volunteer"
  * });
  */
+
 export const logAction = async (
   externalUid: string,
   action: ActionLog["action"],
@@ -340,22 +340,38 @@ export const logAction = async (
     externalUid,
     action,
     timestamp: new Date(),
-    volunteerUid: volunteer.uid,
     volunteerName: volunteer.name,
   };
   await addDoc(collection(db, "actionLogs"), actionLog);
+  console.log("Action logged:", actionLog);
 
   // Update external's last entry/exit
   const externalRef = doc(db, "externals", externalUid);
   const updateData: Partial<External> = {};
 
   if (action === "gate-in") {
-    updateData.lastEntry = new Date();
+    updateData.gateIn = true;
+  } else if (action === "check-in") {
+    updateData.checkIn = true;
+    updateData.insideCampus = true;
+  } else if (action === "check-out") {
+    updateData.checkOut = true;
   } else if (action === "gate-out") {
-    updateData.lastExit = new Date();
+    updateData.gateOut = false;
+    updateData.checkOut = false;
+    updateData.insideCampus = false;
+    updateData.gateIn = false;
+    updateData.checkIn = false;
+    updateData.paymentStatus = "not paid";
+  } else if (action === "payment") {
+    updateData.paymentStatus = "paid";
   }
-
-  await setDoc(externalRef, updateData, { merge: true });
+  try {
+    await setDoc(externalRef, updateData, { merge: true });
+    console.log("External updated:", updateData);
+  } catch (error) {
+    console.error("Error updating external:", error);
+  }
 };
 
 /**
