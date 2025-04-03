@@ -429,6 +429,20 @@ export const getExternalsByType = async (
   return querySnapshot.docs.map((doc) => doc.data() as External);
 };
 
+export const fetchExternalsWithStatus = async (
+  selectedStatus: External["status"]
+): Promise<External[]> => {
+  const q = query(
+    collection(db, "externals"),
+    where("status", "==", selectedStatus)
+  );
+  const querySnapshot = await getDocs(q);
+  // querySnapshot.forEach((doc) => {
+  //   console.log(`${doc.id} =>`, doc.data());
+  // });
+  return querySnapshot.docs.map((doc) => doc.data() as External);
+};
+
 /**
  * Updates the status of an external user
  *

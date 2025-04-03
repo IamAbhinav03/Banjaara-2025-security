@@ -7,7 +7,10 @@ import { User, External, ActionLog } from "@/types";
 import Login from "../auth/Login";
 import CSVUpload from "../admin/CSVUpload";
 import { Loader } from "lucide-react";
-import { updateExternalStatus } from "@/services/firebase";
+import {
+  updateExternalStatus,
+  fetchExternalsWithStatus,
+} from "@/services/firebase";
 
 /**
  * EntryExitPortal component that manages user entry and exit
@@ -29,6 +32,7 @@ const EntryExitPortal: React.FC = () => {
   const [checkoutloading, setCheckoutloading] = useState(false);
   const [gateoutloading, setGateoutloading] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   /**
    * Fetches user data for the given UID
@@ -236,6 +240,17 @@ const EntryExitPortal: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   <Button
+                    onClick={() => handleAction("gate-in")}
+                    disabled={userData.gateIn}
+                    className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
+                  >
+                    {gateinloading ? (
+                      <Loader className="animate-spin" />
+                    ) : (
+                      "Gate In"
+                    )}
+                  </Button>
+                  <Button
                     onClick={() => handleAction("payment")}
                     disabled={userData.paymentStatus === "paid"}
                     className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
@@ -244,19 +259,6 @@ const EntryExitPortal: React.FC = () => {
                       <Loader className="animate-spin" />
                     ) : (
                       "Fees Paid"
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => handleAction("gate-in")}
-                    disabled={
-                      userData.paymentStatus !== "paid" || userData.gateIn
-                    }
-                    className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
-                  >
-                    {gateinloading ? (
-                      <Loader className="animate-spin" />
-                    ) : (
-                      "Gate In"
                     )}
                   </Button>
                   <Button
@@ -312,6 +314,79 @@ const EntryExitPortal: React.FC = () => {
         {loggedInUser.role === "admin" && (
           <div className="mt-4">
             <CSVUpload user={loggedInUser} />
+          </div>
+        )}
+        {loggedInUser.role === "admin" && (
+          <div className="mt-4">
+            <div className="flex gap-2 items-center">
+              <select
+                id="status-select"
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                <option value="not arrived">Not Arrived</option>
+                <option value="gated in">Gated In</option>
+                <option value="checked in">Checked In</option>
+                <option value="checked out">Checked Out</option>
+                <option value="gate out">Gate Out</option>
+              </select>
+              <Button
+                onClick={async () => {
+                  try {
+                    if (!selectedStatus) {
+                      alert("Please select a status");
+                      return;
+                    }
+
+                    const response = await fetchExternalsWithStatus(
+                      selectedStatus as External["status"]
+                    );
+                    if (!response) {
+                      throw new Error("Network response was not ok");
+                    }
+                    const data = await response;
+                    const csvContent =
+                      "data:text/csv;charset=utf-8," +
+                      [
+                        [
+                          "BID",
+                          "Name",
+                          "Type",
+                          "Phone",
+                          "Email",
+                          "Status",
+                        ].join(","),
+                        ...data.map((external: External) =>
+                          [
+                            external.bid,
+                            external.name,
+                            external.type,
+                            external.phone,
+                            external.email,
+                            external.status,
+                          ].join(",")
+                        ),
+                      ].join("\n");
+
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute(
+                      "download",
+                      `externals_data_${selectedStatus}.csv`
+                    );
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  } catch (error) {
+                    console.error("Error downloading data:", error);
+                  }
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                Download Externals Data
+              </Button>
+            </div>
           </div>
         )}
       </div>
