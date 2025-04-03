@@ -6,7 +6,8 @@ import { signOut, getExternalByUid, logAction } from "@/services/firebase";
 import { User, External, ActionLog } from "@/types";
 import Login from "../auth/Login";
 import CSVUpload from "../admin/CSVUpload";
-import { Loader } from "lucide-react";
+import UserSearcher from "../admin/UserSearch";
+import { Loader, UserSearch } from "lucide-react";
 import {
   updateExternalStatus,
   fetchExternalsWithStatus,
@@ -387,6 +388,7 @@ const EntryExitPortal: React.FC = () => {
                 Download Externals Data
               </Button>
             </div>
+            <UserSearcher></UserSearcher>
           </div>
         )}
       </div>
