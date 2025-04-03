@@ -148,7 +148,6 @@ export const createExternal = async (data: CSVRow): Promise<void> => {
     const external: External = {
       ...data,
       registrationDate: new Date(),
-      paymentStatus: "not paid",
       gateIn: false,
       gateOut: false,
       checkIn: false,
@@ -250,8 +249,8 @@ const generateUniqueBid = async (): Promise<string> => {
 export const onSpotRegistration = async (
   name: string,
   email: string,
-  phone: string
-  // college: string
+  phone: string,
+  college: string
 ): Promise<string> => {
   try {
     // Generate a unique bid
@@ -264,6 +263,7 @@ export const onSpotRegistration = async (
       name,
       email,
       phone,
+      college,
       type: "on-the-spot",
       paymentStatus: "not paid",
       registrationDate: new Date(),
@@ -471,7 +471,6 @@ export const updateExternalStatus = async (
   }
 };
 
-
 /**
  * Searches for external users by name or email
  *
@@ -491,7 +490,9 @@ export const searchUsers = async (searchTerm: string): Promise<External[]> => {
 
     const emailSnapshot = await getDocs(emailQuery);
 
-    const emailResults = emailSnapshot.docs.map((doc) => doc.data() as External);
+    const emailResults = emailSnapshot.docs.map(
+      (doc) => doc.data() as External
+    );
 
     return emailResults;
   } catch (error) {
