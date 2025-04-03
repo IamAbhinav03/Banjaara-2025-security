@@ -7,7 +7,7 @@ import { User, External, ActionLog } from "@/types";
 import Login from "../auth/Login";
 import CSVUpload from "../admin/CSVUpload";
 import UserSearcher from "../admin/UserSearch";
-import { Loader, UserSearch } from "lucide-react";
+import { Loader } from "lucide-react";
 import {
   updateExternalStatus,
   fetchExternalsWithStatus,
@@ -174,16 +174,16 @@ const EntryExitPortal: React.FC = () => {
 
             <div className="flex gap-2 mb-4">
               <Input
-                placeholder="Enter BID"
-                value={uid}
-                onChange={(e) => setUid(e.target.value)}
-                className="flex-1 text-sm"
+              placeholder="Enter BID"
+              value={uid}
+              onChange={(e) => setUid(e.target.value.toUpperCase())}
+              className="flex-1 text-sm"
               />
               <Button
-                onClick={fetchUserData}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={fetchUserData}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
               >
-                Search
+              Search
               </Button>
             </div>
 
