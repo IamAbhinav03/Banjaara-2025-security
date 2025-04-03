@@ -483,18 +483,16 @@ export const updateExternalStatus = async (
  */
 export const searchUsers = async (searchTerm: string): Promise<External[]> => {
   try {
-    const emailQuery = query(
-      collection(db, "externals"),
-      where("email", "==", searchTerm)
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+    const allUsersSnapshot = await getDocs(collection(db, "externals"));
+    const allUsers = allUsersSnapshot.docs.map((doc) => doc.data() as External);
+
+    const filteredUsers = allUsers.filter(
+      (user) => user.name && user.name.toLowerCase().includes(lowerCaseSearchTerm)
     );
 
-    const emailSnapshot = await getDocs(emailQuery);
-
-    const emailResults = emailSnapshot.docs.map(
-      (doc) => doc.data() as External
-    );
-
-    return emailResults;
+    return filteredUsers;
   } catch (error) {
     console.error("Error searching for users:", error);
     throw new Error("Failed to search for users. Please try again.");
