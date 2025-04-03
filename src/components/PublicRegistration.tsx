@@ -16,11 +16,28 @@ const PublicRegistration: React.FC = () => {
     message: string;
   } | null>(null);
   const [generatedBid, setGeneratedBid] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
     setGeneratedBid(null);
+    setFormErrors(null);
+
+    // Validate email
+    const email = formData.email;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setFormErrors("Please enter a valid email address.");
+      return;
+    }
+    // Validate phone number
+    const phone = formData.phone;
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+      setFormErrors("Please enter a valid 10-digit phone number.");
+      return;
+    }
 
     try {
       // Call the onSpotRegistration function with the form data
@@ -92,9 +109,17 @@ const PublicRegistration: React.FC = () => {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const email = e.target.value;
+                    setFormData({ ...formData, email });
+                  }}
+                  onBlur={(e) => {
+                    const email = e.target.value;
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                      alert("Please enter a valid email address.");
+                    }
+                  }}
                   className="mt-1"
                   placeholder="Enter your email"
                 />
@@ -115,6 +140,13 @@ const PublicRegistration: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
+                  onBlur={(e) => {
+                    const phone = e.target.value;
+                    const phoneRegex = /^[0-9]{10}$/;
+                    if (!phoneRegex.test(phone)) {
+                      alert("Please enter a valid 10-digit phone number.");
+                    }
+                  }}
                   className="mt-1"
                   placeholder="Enter your phone number"
                 />
@@ -144,6 +176,12 @@ const PublicRegistration: React.FC = () => {
                 Register
               </Button>
             </form>
+
+            {formErrors && (
+              <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-md">
+                <p className="text-sm">{formErrors}</p>
+              </div>
+            )}
 
             {status && (
               <div
