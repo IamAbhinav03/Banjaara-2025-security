@@ -26,6 +26,7 @@ export interface External {
   name: string;
   email: string;
   phone: string;
+  college: string;
   paymentStatus: string;
   type: ExternalType;
   registrationDate: Date;
@@ -45,20 +46,21 @@ export interface External {
     | "gate out";
 }
 
+export interface CSVRow {
+  bid: string;
+  name: string;
+  email: string;
+  phone: string;
+  college: string;
+  type: ExternalType;
+  paymentStatus: string;
+  events: string[];
+}
+
 export interface ActionLog {
   id: string;
   externalUid: string;
   action: ActionType;
   timestamp: Date;
   volunteerName: string;
-}
-
-export interface CSVRow {
-  bid: string;
-  name: string;
-  email: string;
-  phone: string;
-  type: ExternalType;
-  paymentStatus: string;
-  events: string[];
 }

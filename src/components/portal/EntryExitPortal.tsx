@@ -7,7 +7,7 @@ import { User, External, ActionLog } from "@/types";
 import Login from "../auth/Login";
 import CSVUpload from "../admin/CSVUpload";
 import UserSearcher from "../admin/UserSearch";
-import { Loader, UserSearch } from "lucide-react";
+import { Loader } from "lucide-react";
 import {
   updateExternalStatus,
   fetchExternalsWithStatus,
@@ -205,7 +205,8 @@ const EntryExitPortal: React.FC = () => {
                       <span className="text-gray-600">Payment Status:</span>
                       <p
                         className={`font-medium ${
-                          userData.paymentStatus === "paid"
+                          userData.paymentStatus === "paid" ||
+                          userData.paymentStatus === "Paid"
                             ? "text-green-600"
                             : "text-red-600"
                         }`}
@@ -218,6 +219,19 @@ const EntryExitPortal: React.FC = () => {
                       <p className="font-medium capitalize">
                         {userData.status}
                       </p>
+                    </div>
+                    {/* @copiolot display user college name phone number and email */}
+                    <div>
+                      <span className="text-gray-600">College:</span>
+                      <p className="font-medium">{userData.college}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Phone:</span>
+                      <p className="font-medium">{userData.phone}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Email:</span>
+                      <p className="font-medium">{userData.email}</p>
                     </div>
                   </div>
 
@@ -253,7 +267,10 @@ const EntryExitPortal: React.FC = () => {
                   </Button>
                   <Button
                     onClick={() => handleAction("payment")}
-                    disabled={userData.paymentStatus === "paid"}
+                    disabled={
+                      userData.paymentStatus === "paid" ||
+                      userData.paymentStatus === "Paid"
+                    }
                     className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
                   >
                     {feepaidloading ? (
