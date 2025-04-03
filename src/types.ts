@@ -1,6 +1,11 @@
 export type UserRole = "admin" | "volunteer";
 
-export type ExternalType = "participant" | "attendee" | "on-the-spot";
+export type ExternalType =
+  | "participant"
+  | "attendee-day1"
+  | "attendee-day2"
+  | "attendee-bothdays"
+  | "on-the-spot";
 
 export type ActionType =
   | "gate-in"

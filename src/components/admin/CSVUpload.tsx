@@ -81,7 +81,9 @@ const CSVUpload: React.FC<CSVUploadProps> = () => {
             defaultValue="participant"
           >
             <option value="participant">Participant</option>
-            <option value="attendee">Attendee</option>
+            <option value="attendee-day1">Attendee Day1</option>
+            <option value="attendee-day2">Attendee Day2</option>
+            <option value="attendee-bothday">Attendee Both Days</option>
             <option value="on-the-spot">On-the-Spot</option>
           </select>
           <Button
