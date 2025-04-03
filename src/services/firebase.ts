@@ -470,3 +470,32 @@ export const updateExternalStatus = async (
     throw new Error("Failed to update status. Please try again.");
   }
 };
+
+
+/**
+ * Searches for external users by name or email
+ *
+ * @param searchTerm - The term to search for (name or email)
+ * @returns Promise<External[]> - Array of matching external users
+ *
+ * @example
+ * const results = await UserSearch("John");
+ * console.log(`Found ${results.length} users`);
+ */
+export const searchUsers = async (searchTerm: string): Promise<External[]> => {
+  try {
+    const emailQuery = query(
+      collection(db, "externals"),
+      where("email", "==", searchTerm)
+    );
+
+    const emailSnapshot = await getDocs(emailQuery);
+
+    const emailResults = emailSnapshot.docs.map((doc) => doc.data() as External);
+
+    return emailResults;
+  } catch (error) {
+    console.error("Error searching for users:", error);
+    throw new Error("Failed to search for users. Please try again.");
+  }
+};
