@@ -38,7 +38,7 @@ const UserSearcher: React.FC = () => {
                     <h1 className="text-2xl font-bold mb-2">Search Users</h1>
                     <Input
                         type="text"
-                        placeholder="Enter name, email, or ID"
+                        placeholder="Enter name of User"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
