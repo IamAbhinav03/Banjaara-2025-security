@@ -173,7 +173,7 @@ const EntryExitPortal: React.FC = () => {
 
             <div className="flex gap-2 mb-4">
               <Input
-                placeholder="Enter UID"
+                placeholder="Enter BID"
                 value={uid}
                 onChange={(e) => setUid(e.target.value)}
                 className="flex-1 text-sm"
