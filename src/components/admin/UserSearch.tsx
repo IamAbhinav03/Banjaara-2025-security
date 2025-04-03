@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { searchUsers } from "@/services/firebase";
 import { Loader } from "lucide-react";
-import { query as firestoreQuery } from "firebase/firestore";
 
 const UserSearcher: React.FC = () => {
     const [results, setResults] = useState<External[]>([]);
