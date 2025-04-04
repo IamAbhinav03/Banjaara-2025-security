@@ -154,6 +154,7 @@ export const createExternal = async (data: CSVRow): Promise<void> => {
       checkOut: false,
       insideCampus: false,
       status: "not arrived",
+      lastTime: "",
     };
     await setDoc(doc(db, "externals", bid), external);
     await updateDoc(doc(db, "usedBids", "bids"), {
@@ -274,6 +275,7 @@ export const onSpotRegistration = async (
       insideCampus: false,
       events: [],
       status: "not arrived",
+      lastTime: "",
     };
 
     // Store the new user in Firestore
@@ -456,11 +458,12 @@ export const fetchExternalsWithStatus = async (
  */
 export const updateExternalStatus = async (
   externalUid: string,
-  status: External["status"]
+  status: External["status"],
+  lastTime: string
 ): Promise<void> => {
   try {
     const externalRef = doc(db, "externals", externalUid);
-    await updateDoc(externalRef, { status });
+    await updateDoc(externalRef, { status , lastTime},);
     console.log(`Status of external user ${externalUid} updated to ${status}`);
   } catch (error) {
     console.error(

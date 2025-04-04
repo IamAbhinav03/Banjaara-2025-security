@@ -11,7 +11,12 @@ import { Loader } from "lucide-react";
 import {
   updateExternalStatus,
   fetchExternalsWithStatus,
+  // Timestamp
 } from "@/services/firebase";
+// import { Timestamp } from "firebase/firestore";
+
+// import { Timestamp } from "firebase/firestore";
+
 
 /**
  * EntryExitPortal component that manages user entry and exit
@@ -78,13 +83,14 @@ const EntryExitPortal: React.FC = () => {
       await logAction(uid, action, loggedInUser);
 
       let newStatus: External["status"] = userData.status;
+      const newtime: string = new Date().toISOString();
       if (action === "gate-in") newStatus = "gated in";
       else if (action === "check-in") newStatus = "checked in";
       else if (action === "check-out") newStatus = "checked out";
       else if (action === "gate-out") newStatus = "gate out";
 
       // Update user data with the new status
-      await updateExternalStatus(uid, newStatus);
+      await updateExternalStatus(uid, newStatus, newtime);
 
       // Format data for Google Sheets
       // const timestamp = new Date().toISOString();
@@ -233,6 +239,14 @@ const EntryExitPortal: React.FC = () => {
                       <span className="text-gray-600">Email:</span>
                       <p className="font-medium">{userData.email}</p>
                     </div>
+                    <div></div>
+                    <div>
+  <span className="text-gray-600">Last TimeStamp:</span>
+  <p className="font-medium">
+    {new Date(userData.lastTime).toLocaleString()} 
+  </p>
+</div>
+
                   </div>
 
                   {userData.type === "participant" &&
@@ -405,10 +419,11 @@ const EntryExitPortal: React.FC = () => {
                 Download Externals Data
               </Button>
             </div>
-            <UserSearcher></UserSearcher>
+            
           </div>
         )}
       </div>
+      <UserSearcher></UserSearcher>
     </div>
   );
 };
