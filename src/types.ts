@@ -5,7 +5,8 @@ export type ExternalType =
   | "attendee-day1"
   | "attendee-day2"
   | "attendee-bothdays"
-  | "on-the-spot";
+  | "on-the-spot"
+  | "standup-comedy";
 
 export type ActionType =
   | "gate-in"
