@@ -39,6 +39,7 @@ export interface External {
   lastEntry?: Date;
   lastExit?: Date;
   events: string[];
+  lastTime: string;
   status:
     | "not arrived"
     | "gated in"
