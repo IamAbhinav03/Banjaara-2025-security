@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 import App from "./App.tsx";
 import PublicRegistration from "./components/PublicRegistration.tsx";
+import VolunteerRegistration from "./components/VolunteerRegistration.tsx";
 
 const router = createBrowserRouter([
   {
@@ -14,6 +15,10 @@ const router = createBrowserRouter([
     path: "/register",
     element: <PublicRegistration />,
   },
+  {
+    path: "/volunteer",
+    element: <VolunteerRegistration />,
+  }
 ]);
 
 createRoot(document.getElementById("root")!).render(

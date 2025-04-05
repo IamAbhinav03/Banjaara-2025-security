@@ -66,3 +66,9 @@ export interface ActionLog {
   timestamp: Date;
   volunteerName: string;
 }
+
+export interface VolunteerEntry {
+  name: string;
+  email: string;
+  role: string;
+}
