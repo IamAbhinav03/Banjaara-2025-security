@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,23 +11,8 @@ import { Loader } from "lucide-react";
 import {
   updateExternalStatus,
   fetchExternalsWithStatus,
-  // Timestamp
 } from "@/services/firebase";
-// import { Timestamp } from "firebase/firestore";
 
-// import { Timestamp } from "firebase/firestore";
-
-
-/**
- * EntryExitPortal component that manages user entry and exit
- *
- * This component provides functionality for:
- * - User authentication
- * - Searching for users by UID
- * - Recording entry/exit events (gate-in, check-in, check-out, gate-out)
- * - Payment status management
- * - CSV upload for admin users
- */
 const EntryExitPortal: React.FC = () => {
   const [uid, setUid] = useState("");
   const [userData, setUserData] = useState<External | null>(null);
@@ -38,7 +23,114 @@ const EntryExitPortal: React.FC = () => {
   const [checkoutloading, setCheckoutloading] = useState(false);
   const [gateoutloading, setGateoutloading] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  // const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [statusCounts, setStatusCounts] = useState({
+    gatedIn: 0,
+    checkedIn: 0,
+    checkedOut: 0,
+    gateOut: 0,
+  });
+  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  const [filters, setFilters] = useState({
+    status: "",
+    event: "",
+    college: "",
+    gender: "",
+  });
+
+  // Function to fetch live counts
+  const fetchLiveCounts = async () => {
+    try {
+      const gatedIn = await fetchExternalsWithStatus("gated in");
+      const checkedIn = await fetchExternalsWithStatus("checked in");
+      const checkedOut = await fetchExternalsWithStatus("checked out");
+      const gateOut = await fetchExternalsWithStatus("gate out");
+
+      setStatusCounts({
+        gatedIn: gatedIn.length,
+        checkedIn: checkedIn.length,
+        checkedOut: checkedOut.length,
+        gateOut: gateOut.length,
+      });
+    } catch (error) {
+      console.error("Error fetching live counts:", error);
+    }
+  };
+
+  // Start the timer to fetch data every 8 minutes
+  useEffect(() => {
+    fetchLiveCounts();
+    const interval = setInterval(fetchLiveCounts, 8 * 60 * 1000);
+    setTimer(interval);
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, []);
+
+  // Manually fetch data and restart the timer
+  const handleManualFetch = () => {
+    if (timer) clearInterval(timer);
+    fetchLiveCounts();
+    const interval = setInterval(fetchLiveCounts, 8 * 60 * 1000);
+    setTimer(interval);
+  };
+
+  // Enhanced CSV download logic
+  const handleDownloadCSV = async () => {
+    try {
+      const response = await fetchExternalsWithStatus(
+        filters.status as External["status"]
+      );
+      if (!response) {
+        throw new Error("Network response was not ok");
+      }
+      const data = response.filter((external: External) => {
+        return (
+          (!filters.event || external.events.includes(filters.event)) &&
+          (!filters.college || external.college === filters.college)
+          // (!filters.gender || external.gender === filters.gender)
+        );
+      });
+
+      const csvContent =
+        "data:text/csv;charset=utf-8," +
+        [
+          [
+            "BID",
+            "Name",
+            "Type",
+            "Phone",
+            "Email",
+            "Status",
+            "Event",
+            "College",
+          ].join(","),
+          ...data.map((external: External) =>
+            [
+              external.bid,
+              external.name,
+              external.type,
+              external.phone,
+              external.email,
+              external.status,
+              external.events.join("; "),
+              external.college,
+            ].join(",")
+          ),
+        ].join("\n");
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `externals_data_${filters.status}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading data:", error);
+    }
+  };
 
   /**
    * Fetches user data for the given UID
@@ -59,8 +151,6 @@ const EntryExitPortal: React.FC = () => {
     }
   };
 
-  // const scriptUrl =
-  //   "https://script.google.com/macros/s/AKfycbzCWxmLdlHW6iXjn6qPpWa5a7Th1PsCdZ7-Lhknx_r3ctw4ykzj-P89Mm07i8js4mTW/exec";
   /**
    * Handles entry/exit actions for a user
    * @param action - The type of action to perform (gate-in, check-in, check-out, gate-out)
@@ -91,46 +181,6 @@ const EntryExitPortal: React.FC = () => {
 
       // Update user data with the new status
       await updateExternalStatus(uid, newStatus, newtime);
-
-      // Format data for Google Sheets
-      // const timestamp = new Date().toISOString();
-      // const dataRow = [
-      //   timestamp,
-      //   uid,
-      //   userData.name,
-      //   userData.type,
-      //   userData.phone,
-      //   userData.email,
-      // ];
-
-      // Convert action format to match sheet names
-      // let sheetAction = "";
-      // if (action === "gate-in") sheetAction = "GateIn";
-      // else if (action === "gate-out") sheetAction = "GateOut";
-      // else if (action === "check-in") sheetAction = "CheckIn";
-      // else if (action === "check-out") sheetAction = "CheckOut";
-      // // console.log("Sheet action:", sheetAction);
-      // // console.log("Data row:", dataRow);
-      // fetch(scriptUrl, {
-      //   method: "POST",
-      //   mode: "no-cors",
-      //   headers: {
-      //     "Content-Type": "application/x-www-form-urlencoded",
-      //   },
-      //   body: new URLSearchParams({
-      //     e: JSON.stringify(dataRow), // Convert the full array to a JSON string
-      //     a: sheetAction,
-      //   }).toString(),
-      // })
-      //   .then(() => {
-      //     console.log("Request sent to Google Sheets");
-      //     setStatus(`${action} successful`);
-      //   })
-      //   .catch((error) => {
-      //     console.error("Error sending data:", error);
-      //     setStatus("Failed to record action remotely");
-      //   })
-      //   .finally(() => console.log("Request sent to Google Sheets successful"));
     } catch (error) {
       setStatus("Action failed");
       console.error(error);
@@ -180,16 +230,16 @@ const EntryExitPortal: React.FC = () => {
 
             <div className="flex gap-2 mb-4">
               <Input
-              placeholder="Enter BID"
-              value={uid}
-              onChange={(e) => setUid(e.target.value.toUpperCase())}
-              className="flex-1 text-sm"
+                placeholder="Enter BID"
+                value={uid}
+                onChange={(e) => setUid(e.target.value.toUpperCase())}
+                className="flex-1 text-sm"
               />
               <Button
-              onClick={fetchUserData}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={fetchUserData}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
               >
-              Search
+                Search
               </Button>
             </div>
 
@@ -226,7 +276,6 @@ const EntryExitPortal: React.FC = () => {
                         {userData.status}
                       </p>
                     </div>
-                    {/* @copiolot display user college name phone number and email */}
                     <div>
                       <span className="text-gray-600">College:</span>
                       <p className="font-medium">{userData.college}</p>
@@ -241,12 +290,11 @@ const EntryExitPortal: React.FC = () => {
                     </div>
                     <div></div>
                     <div>
-  <span className="text-gray-600">Last TimeStamp:</span>
-  <p className="font-medium">
-    {new Date(userData.lastTime).toLocaleString()} 
-  </p>
-</div>
-
+                      <span className="text-gray-600">Last TimeStamp:</span>
+                      <p className="font-medium">
+                        {new Date(userData.lastTime).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
 
                   {userData.type === "participant" &&
@@ -332,17 +380,6 @@ const EntryExitPortal: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* <div className="text-center mt-2">
-          <a
-            href="https://docs.google.com/spreadsheets/d/1MEGvGRHRyYhQsZEFsZijlMKt4fU8Vy9SN4VNANBarHg/edit?gid=1862116381#gid=1862116381"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline text-sm"
-          >
-            View Google Sheets
-          </a>
-        </div> */}
-
         {loggedInUser.role === "admin" && (
           <div className="mt-4">
             <CSVUpload user={loggedInUser} />
@@ -350,76 +387,70 @@ const EntryExitPortal: React.FC = () => {
         )}
         {loggedInUser.role === "admin" && (
           <div className="mt-4">
-            <div className="flex gap-2 items-center">
-              <select
-                id="status-select"
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
-                <option value="not arrived">Not Arrived</option>
-                <option value="gated in">Gated In</option>
-                <option value="checked in">Checked In</option>
-                <option value="checked out">Checked Out</option>
-                <option value="gate out">Gate Out</option>
-              </select>
+            <div className="bg-white p-4 rounded shadow">
+              <h2 className="text-lg font-bold mb-2">Live Counts</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <p>Gated In: {statusCounts.gatedIn}</p>
+                <p>Checked In: {statusCounts.checkedIn}</p>
+                <p>Checked Out: {statusCounts.checkedOut}</p>
+                <p>Gate Out: {statusCounts.gateOut}</p>
+              </div>
               <Button
-                onClick={async () => {
-                  try {
-                    if (!selectedStatus) {
-                      alert("Please select a status");
-                      return;
-                    }
-
-                    const response = await fetchExternalsWithStatus(
-                      selectedStatus as External["status"]
-                    );
-                    if (!response) {
-                      throw new Error("Network response was not ok");
-                    }
-                    const data = await response;
-                    const csvContent =
-                      "data:text/csv;charset=utf-8," +
-                      [
-                        [
-                          "BID",
-                          "Name",
-                          "Type",
-                          "Phone",
-                          "Email",
-                          "Status",
-                        ].join(","),
-                        ...data.map((external: External) =>
-                          [
-                            external.bid,
-                            external.name,
-                            external.type,
-                            external.phone,
-                            external.email,
-                            external.status,
-                          ].join(",")
-                        ),
-                      ].join("\n");
-
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute(
-                      "download",
-                      `externals_data_${selectedStatus}.csv`
-                    );
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  } catch (error) {
-                    console.error("Error downloading data:", error);
-                  }
-                }}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={handleManualFetch}
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
               >
-                Download Externals Data
+                Refresh Counts
               </Button>
             </div>
-            
+
+            <div className="mt-4">
+              <h2 className="text-lg font-bold mb-2">Download Data</h2>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  onChange={(e) =>
+                    setFilters({ ...filters, status: e.target.value })
+                  }
+                >
+                  <option value="">Select Status</option>
+                  <option value="not arrived">Not Arrived</option>
+                  <option value="gated in">Gated In</option>
+                  <option value="checked in">Checked In</option>
+                  <option value="checked out">Checked Out</option>
+                  <option value="gate out">Gate Out</option>
+                </select>
+                <Input
+                  placeholder="Event"
+                  value={filters.event}
+                  onChange={(e) =>
+                    setFilters({ ...filters, event: e.target.value })
+                  }
+                  className="text-sm"
+                />
+                <Input
+                  placeholder="College"
+                  value={filters.college}
+                  onChange={(e) =>
+                    setFilters({ ...filters, college: e.target.value })
+                  }
+                  className="text-sm"
+                />
+                {/* <Input
+                  placeholder="Gender"
+                  value={filters.gender}
+                  onChange={(e) =>
+                    setFilters({ ...filters, gender: e.target.value })
+                  }
+                  className="text-sm"
+                /> */}
+              </div>
+              <Button
+                onClick={handleDownloadCSV}
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                Download Filtered Data
+              </Button>
+            </div>
           </div>
         )}
       </div>
