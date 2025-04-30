@@ -27,7 +27,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
-import { User, External, ActionLog, CSVRow } from "../types";
+import { User, External, ActionLog, CSVRow, VolunteerEntry } from "../types";
 
 /**
  * Authentication Service
@@ -499,5 +499,41 @@ export const searchUsers = async (searchTerm: string): Promise<External[]> => {
   } catch (error) {
     console.error("Error searching for users:", error);
     throw new Error("Failed to search for users. Please try again.");
+  }
+};
+
+
+
+/**
+ * Registers a new volunteer
+ *
+ * @param name - Name of the volunteer
+ * @param email - Email of the volunteer
+ * @param role - Role of the volunteer (e.g., "volunteer", "admin")
+ * @returns Promise<void>
+ *
+ * @example
+ * await registerVolunteer("Jane Doe", "jane@example.com", "9876543210", "volunteer");
+ * console.log("Volunteer registered successfully");
+ */
+export const registerVolunteer = async (
+  name: string,
+  email: string,
+  role: string
+): Promise<void> => {
+  try {
+    const volunteer: VolunteerEntry = {
+      name,
+      email,
+      role,
+    };
+    console.log("Volunteer data being sent:", volunteer);
+    // await setDoc(doc(db, "users"), volunteer);
+    await addDoc(collection(db, "users"), volunteer);
+    //   await addDoc(collection(db, "actionLogs"), actionLog);
+    console.log("Volunteer registered successfully:", volunteer);
+  } catch (error) {
+    console.error("Error registering volunteer:", error);
+    throw new Error("Failed to register volunteer. Please try again.");
   }
 };
